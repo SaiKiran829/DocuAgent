@@ -8,7 +8,7 @@ An enterprise-grade document Q&A agent built with LangGraph, RAG, and AWS Bedroc
 
 > Upload a PDF → Ask a question → Get a grounded answer with citations
 
-📹 [Watch Demo on Loom](#) ← replace with your Loom link
+📹 [Watch Demo on Loom](https://www.loom.com/share/ede24468c661461d9b4811b1e92247e6) 
 
 ---
 
