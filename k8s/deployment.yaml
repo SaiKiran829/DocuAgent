@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docuagent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: docuagent
+  template:
+    metadata:
+      labels:
+        app: docuagent
+    spec:
+      containers:
+        - name: docuagent
+          image: docuagent:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: docuagent-secrets
