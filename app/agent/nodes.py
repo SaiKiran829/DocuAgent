@@ -51,7 +51,7 @@ class AgentNodes:
 
         response, error = AgentNodes._invoke_with_retry(state, prompt)
         if error:
-            return {"error": error, "retry_count": state["retry_count"] + 1}
+            return {"error": error, "retry_count": state.get("retry_count", 0) + 1}
         intent = response.lower()
         print(f"[classify_node] intent: {intent}")
         return {"intent": intent}
@@ -61,17 +61,38 @@ class AgentNodes:
         last_message = state["messages"][-1].content
         prompt = f"Answer this question helpfully: {last_message}"
 
-        query = state["query"]
-        chunks = state["chunks"]
+        query = state.get("query", last_message)
+        chunks = state.get("chunks", [])
+        
+        history = ""
+        messages = state.get("messages", [])
+        if len(messages) > 1:  # more than just current message
+            history_messages = messages[:-1]  # all except current
+            history_lines = []
+            for msg in history_messages[-6:]:  # last 6 messages for context
+                role = "User" if msg.__class__.__name__ == "HumanMessage" else "Assistant"
+                history_lines.append(f"{role}: {msg.content}")
+        history = "\n".join(history_lines)
 
-        if not state["has_enough_context"] or not chunks:
-            fallback = "I don't have enough information in my documents to answer that question."
-            return {
-                "answer": fallback,
-                "messages": [AIMessage(content=fallback)],
-                "retry_count": 0,
-                "error": None,
-            }
+        if not state.get("has_enough_context", False) or not chunks:
+            prompt = f"""You are a helpful assistant. Answer based on the conversation history below.
+                        If you don't know the answer, say so honestly.
+
+                        Conversation history:
+                        {history if history else "No previous conversation."}
+
+                        Current question: {query}
+
+                        Answer:"""
+        response, error = AgentNodes._invoke_with_retry(state, prompt)
+        if error:
+            return {"error": error, "retry_count": state.get("retry_count", 0) + 1}
+        return {
+            "answer": response,
+            "messages": [AIMessage(content=response)],
+            "retry_count": 0,
+            "error": None
+        }
         
         # build context from chunks
         context = "\n\n".join([
@@ -79,21 +100,23 @@ class AgentNodes:
             for c in chunks
         ])
         
-        prompt = f"""Answer the question using ONLY the context provided below.
-            If the answer is not in the context, say "I don't have enough information."
-            Always mention which source and page your answer comes from.
+        prompt = f"""You are a helpful assistant. Answer the question using the document context provided.
+                    Also consider the conversation history for context.
 
-            Context:
-            {context}
+                    Conversation history:
+                    {history if history else "No previous conversation."}
 
-            Question: {query}
+                    Document context:
+                    {context}
 
-            Answer:"""
+                    Current question: {query}
+
+                    Answer (cite sources when using document context):"""
         
         response, error = AgentNodes._invoke_with_retry(state, prompt)
 
         if error:
-            return {"error": error, "retry_count": state["retry_count"] + 1}
+            return {"error": error, "retry_count": state.get("retry_count", 0) + 1}
 
         print(f"[answer_node] answer: {response[:60]}...")
         return {
@@ -111,7 +134,7 @@ class AgentNodes:
         response, error = AgentNodes._invoke_with_retry(state, prompt)
 
         if error:
-            return {"error": error, "retry_count": state["retry_count"] + 1}
+            return {"error": error, "retry_count": state.get("retry_count", 0) + 1}
 
         print(f"[acknowledge_node] response: {response[:60]}...")
         return {
@@ -129,7 +152,7 @@ class AgentNodes:
         response, error = AgentNodes._invoke_with_retry(state, prompt)
 
         if error:
-            return {"error": error, "retry_count": state["retry_count"] + 1}
+            return {"error": error, "retry_count": state.get("retry_count", 0) + 1}
 
         print(f"[joke_node] response: {response[:60]}...")
         return {
@@ -166,7 +189,7 @@ class AgentNodes:
 
         """Retrieves relevant chunks from vector store based on query."""
 
-        query = state["query"]
+        query = state.get("query", state["messages"][-1].content)
         print(f"[retrieve_node] retrieving context for: '{query}'")
 
         try:
@@ -189,5 +212,5 @@ class AgentNodes:
                 "chunks": [],
                 "has_enough_context": False,
                 "error": f"Retrieval error: {str(e)}",
-                "retry_count": state["retry_count"] + 1,
+                "retry_count": state.get("retry_count", 0) + 1,
             }

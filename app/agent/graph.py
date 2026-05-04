@@ -1,10 +1,12 @@
 from langgraph.graph import StateGraph, END
+from langgraph.checkpoint.memory import MemorySaver
 from app.agent.state import AgentState
 from app.agent.nodes import AgentNodes
 from app.agent.router import AgentRouter
 
 class AgentGraph:
     _graph = None
+    _memory = MemorySaver()  # in-memory checkpoint saver for now
 
     @classmethod
     def build(cls) -> StateGraph:
@@ -70,5 +72,5 @@ class AgentGraph:
         
 
         graph.add_edge("error", END)
-        cls._graph = graph.compile()
+        cls._graph = graph.compile(checkpointer=cls._memory)
         return cls._graph

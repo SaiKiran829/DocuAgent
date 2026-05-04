@@ -5,11 +5,11 @@ class AgentRouter:
     @staticmethod
     def route_by_intent(state: AgentState)-> str:
         
-        if state["error"] is not None:
+        if state.get("error") is not None:
             print(f"[router] error detected, routing to error node")
             return "error"
         
-        intent = state['intent']
+        intent = state.get("intent", "")
         print(f"[router] routing to: {intent}")
         
         match intent:
@@ -25,7 +25,7 @@ class AgentRouter:
             
     @staticmethod
     def route_after_answer(state: AgentState) -> str:
-        if state["error"] is not None:
+        if state.get("error") is not None:
             print(f"[router] error after action, routing to error node")
             return "error"
         return "end"

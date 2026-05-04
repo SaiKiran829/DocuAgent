@@ -1,3 +1,47 @@
+<<<<<<< HEAD
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+.python-version
+.vscode/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Coverage and test outputs
+.coverage
+.coverage.*
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project runtime data
+data/chroma_db/
+*.sqlite3
+
+# Logs
+*.log
+=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -216,3 +260,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+>>>>>>> c5f4645347c4233acc164b72e952e0fe8f30e04f

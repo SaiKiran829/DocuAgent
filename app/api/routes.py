@@ -3,6 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from app.agent.graph import AgentGraph
 from app.rag.retriever import Retriever
@@ -31,7 +32,8 @@ app.add_middleware(
 
 class AskRequest(BaseModel):
     query: str
-    k: int = 4 
+    k: int = 4
+    thread_id: str = "default"  # default for backwards compatibility
     
 class SourceModel(BaseModel):
     source: str
@@ -96,16 +98,12 @@ async def ask(request: AskRequest):
     
     agent = AgentGraph.build()
     
-    result = agent.invoke({
+    # pass thread_id in config — this is how LangGraph finds conversation history
+    config = {"configurable": {"thread_id": request.thread_id}}
+    
+    result = await run_in_threadpool(agent.invoke, {
         "messages": [HumanMessage(content=request.query)],
-        "chunks": [],
-        "intent": "",
-        "answer": "",
-        "has_enough_context": False,
-        "error": None,
-        "retry_count": 0,
-        "query": ""
-    })
+    }, config=config)
     
     
     # extract sources from chunks
